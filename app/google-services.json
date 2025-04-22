@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "43529307299",
+    "project_id": "appdev-ceb44",
+    "storage_bucket": "appdev-ceb44.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43529307299:android:6abcca7df2c0b2180fab16",
+        "android_client_info": {
+          "package_name": "com.example.ryd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjzjAVgSKjaEGxGVQgftmw3kNZViT3IOY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
