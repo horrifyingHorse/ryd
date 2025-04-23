@@ -140,22 +140,6 @@ class RideDetailActivity : AppCompatActivity() {
 
 
     private fun loadRideDetails() {
-//    firestore.collection("rides")
-//        .document(rideId)
-//        .get()
-//        .addOnSuccessListener { document ->
-//            if (document.exists()) {
-//                ride = document.toObject(Ride::class.java)?.apply { id = document.id }
-//                updateUI()
-//            } else {
-//                Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
-//                finish()
-//            }
-//        }
-//        .addOnFailureListener { e ->
-//            Toast.makeText(this, "Error loading ride: ${e.message}", Toast.LENGTH_SHORT).show()
-//            finish()
-//        }
         val currentUserId = auth.currentUser?.uid
 
         firestore.collection("rides")
@@ -182,32 +166,32 @@ class RideDetailActivity : AppCompatActivity() {
                 }
             }
 
-        firestore.collection("rides")
-            .document(rideId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    ride = document.toObject(Ride::class.java)?.apply { id = document.id }
-                    updateUI()
-
-                    loadRideRequests()
-
-                    // Only load requests if current user is the ride owner
-                    if (ride?.userId == currentUserId) {
-                        loadRideRequests()
-//                    } else {
-//                        requestsCard.visibility = View.GONE
-//                        confirmedCard.visibility = View.GONE
-                    }
-                } else {
-                    Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error loading ride: ${e.message}", Toast.LENGTH_SHORT).show()
-                finish()
-            }
+//        firestore.collection("rides")
+//            .document(rideId)
+//            .get()
+//            .addOnSuccessListener { document ->
+//                if (document.exists()) {
+//                    ride = document.toObject(Ride::class.java)?.apply { id = document.id }
+//                    updateUI()
+//
+//                    loadRideRequests()
+//
+//                    // Only load requests if current user is the ride owner
+//                    if (ride?.userId == currentUserId) {
+//                        loadRideRequests()
+////                    } else {
+////                        requestsCard.visibility = View.GONE
+////                        confirmedCard.visibility = View.GONE
+//                    }
+//                } else {
+//                    Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
+//                    finish()
+//                }
+//            }
+//            .addOnFailureListener { e ->
+//                Toast.makeText(this, "Error loading ride: ${e.message}", Toast.LENGTH_SHORT).show()
+//                finish()
+//            }
     }
 
     private fun checkExistingRequest() {
@@ -249,42 +233,6 @@ class RideDetailActivity : AppCompatActivity() {
             }
     }
 
-//    private fun updateUI() {
-//        ride?.let { ride ->
-//            tvRiderName.text = ride.userName
-//            tvRideType.text = if (ride.isDriver) "Driver" else "Passenger"
-//            tvFromLocation.text = ride.fromLocation
-//            tvDestination.text = ride.destination
-//
-//            val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.getDefault())
-//            val departureDate = Date(ride.departureTime)
-//            tvDepartureTime.text = dateFormat.format(departureDate)
-//
-//            if (ride.description.isNotEmpty()) {
-//                tvDescription.text = ride.description
-//                tvDescription.visibility = View.VISIBLE
-//            } else {
-//                tvDescription.visibility = View.GONE
-//            }
-//
-//            // Show seats available only for drivers
-//            if (ride.isDriver) {
-//                tvSeatsAvailable.visibility = View.VISIBLE
-//                tvSeatsAvailable.text = "${ride.seats} seats available"
-//            } else {
-//                tvSeatsAvailable.visibility = View.GONE
-//            }
-//
-//            // Show Join Trip button for all rides except your own
-//            if (ride.userId != auth.currentUser?.uid) {
-//                btnRequestRide.visibility = View.VISIBLE
-//                btnRequestRide.text = "Join Trip" // Update button text
-//            } else {
-//                btnRequestRide.visibility = View.GONE
-//            }
-//        }
-//    }
-
     private fun updateUI() {
         ride?.let { ride ->
             tvRiderName.text = ride.userName
@@ -323,9 +271,11 @@ class RideDetailActivity : AppCompatActivity() {
             if (ride.userId == currentUserId) {
                 // Current user is the ride owner
                 btnRequestRide.visibility = View.GONE
+                btnMessageRider.visibility = View.GONE
             } else {
                 // Current user is not the ride owner
                 btnRequestRide.visibility = View.VISIBLE
+                btnMessageRider.visibility = View.VISIBLE
                 checkExistingRequest()
             }
 
@@ -406,72 +356,6 @@ class RideDetailActivity : AppCompatActivity() {
         }
     }
 
-//    private fun loadRideRequests() {
-//        Log.d("RideDetailActivity", "Loading ride requests for ride: $rideId")
-//
-//        // Check visibility before loading
-//        Log.d("RideDetailActivity", "Card visibility - Requests: ${requestsCard.visibility == View.VISIBLE}, Confirmed: ${confirmedCard.visibility == View.VISIBLE}")
-//
-//        firestore.collection("rideRequests")
-//            .whereEqualTo("rideId", rideId)
-//            .get()
-//            .addOnSuccessListener { documents ->
-//                rideRequests.clear()
-//                confirmedRiders.clear()
-//
-//                for (document in documents) {
-//                    val request = document.toObject(RideRequest::class.java).apply {
-//                        id = document.id
-//                    }
-//
-//                    when (request.status) {
-//                        "pending" -> rideRequests.add(request)
-//                        "accepted" -> confirmedRiders.add(request)
-//                    }
-//                }
-//
-//                // Update adapters
-//                requestsAdapter.notifyDataSetChanged()
-//                confirmedAdapter.notifyDataSetChanged()
-//
-//                // Show/hide "no items" messages
-//                tvNoRequests.visibility = if (rideRequests.isEmpty()) View.VISIBLE else View.GONE
-//                tvNoConfirmed.visibility = if (confirmedRiders.isEmpty()) View.VISIBLE else View.GONE
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Failed to load ride requests: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
-//
-//    private fun acceptRequest(request: RideRequest) {
-//        firestore.collection("rideRequests")
-//            .document(request.id)
-//            .update("status", "accepted")
-//            .addOnSuccessListener {
-//                Toast.makeText(this, "Request accepted", Toast.LENGTH_SHORT).show()
-//
-//                // Reload requests
-//                loadRideRequests()
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Failed to accept request: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
-//
-//    private fun rejectRequest(request: RideRequest) {
-//        firestore.collection("rideRequests")
-//            .document(request.id)
-//            .update("status", "rejected")
-//            .addOnSuccessListener {
-//                Toast.makeText(this, "Request rejected", Toast.LENGTH_SHORT).show()
-//
-//                // Reload requests
-//                loadRideRequests()
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Failed to reject request: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
     private fun acceptRequest(request: RideRequest) {
         firestore.collection("rideRequests")
             .document(request.id)
@@ -551,11 +435,6 @@ class RideDetailActivity : AppCompatActivity() {
 
                 firestore.collection("rideRequests")
                     .add(request)
-//                    .addOnSuccessListener {
-//                        Toast.makeText(this, "Trip join request sent!", Toast.LENGTH_SHORT).show()
-//                        btnRequestRide.isEnabled = false
-//                        btnRequestRide.text = "Request Sent"
-//                    }
                     .addOnSuccessListener { documentRef ->
                         userRequestId = documentRef.id
                         btnRequestRide.text = "Cancel Request"

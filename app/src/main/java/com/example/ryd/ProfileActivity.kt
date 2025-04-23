@@ -21,6 +21,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
 import java.util.UUID
+import kotlin.text.get
+import kotlin.toString
 
 class ProfileActivity : AppCompatActivity() {
     companion object {
@@ -34,6 +36,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var etEmail: EditText
     private lateinit var etDepartment: EditText
     private lateinit var etYear: EditText
+    private lateinit var etPhone: EditText
     private lateinit var btnSaveProfile: Button
     private lateinit var btnSignOut: Button
 
@@ -63,21 +66,32 @@ class ProfileActivity : AppCompatActivity() {
         btnChangePhoto = findViewById(R.id.btnChangePhoto)
         etName = findViewById(R.id.etName)
         etEmail = findViewById(R.id.etEmail)
+        etPhone = findViewById(R.id.etPhone)
         etDepartment = findViewById(R.id.etDepartment)
         etYear = findViewById(R.id.etYear)
         btnSaveProfile = findViewById(R.id.btnSaveProfile)
         btnSignOut = findViewById(R.id.btnSignOut)
+
+        val etPhone = findViewById<EditText>(R.id.etPhone)
+        val btnChangePassword = findViewById<Button>(R.id.btnChangePassword)
 
         // Setup toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "My Profile"
 
+        etDepartment.isEnabled = false
+        etYear.isEnabled = false
+
         // Make email non-editable
         etEmail.isEnabled = false
 
         // Load user profile
         loadUserProfile()
+
+        btnChangePassword.setOnClickListener {
+            showChangePasswordDialog()
+        }
 
         // Setup click listeners
         btnChangePhoto.setOnClickListener {
@@ -114,13 +128,27 @@ class ProfileActivity : AppCompatActivity() {
                 .get()
                 .addOnSuccessListener { documentSnapshot ->
                     if (documentSnapshot.exists()) {
-                        etDepartment.setText(documentSnapshot.getString("department"))
-                        etYear.setText(documentSnapshot.getString("year"))
+                        etDepartment.setText(documentSnapshot.getString("branch"))
+                        etYear.setText(documentSnapshot.getLong("academicYear")?.toString() ?: "")
+                        // Add phone number retrieval
+                        etPhone.setText(documentSnapshot.getString("phone") ?: "")
                     }
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Error loading profile data: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
+//            firestore.collection("users")
+//                .document(currentUser.uid)
+//                .get()
+//                .addOnSuccessListener { documentSnapshot ->
+//                    if (documentSnapshot.exists()) {
+//                        etDepartment.setText(documentSnapshot.getString("department"))
+//                        etYear.setText(documentSnapshot.getString("year"))
+//                    }
+//                }
+//                .addOnFailureListener { e ->
+//                    Toast.makeText(this, "Error loading profile data: ${e.message}", Toast.LENGTH_SHORT).show()
+//                }
         }
     }
 
@@ -141,11 +169,16 @@ class ProfileActivity : AppCompatActivity() {
     private fun saveUserProfile() {
         val currentUser = auth.currentUser ?: return
         val name = etName.text.toString().trim()
-        val department = etDepartment.text.toString().trim()
-        val year = etYear.text.toString().trim()
+        val phone = etPhone.text.toString().trim()
 
         if (name.isEmpty()) {
             etName.error = "Name is required"
+            return
+        }
+
+        // Validate phone number (basic validation)
+        if (phone.isNotEmpty() && !isValidPhoneNumber(phone)) {
+            etPhone.error = "Please enter a valid phone number"
             return
         }
 
@@ -163,18 +196,18 @@ class ProfileActivity : AppCompatActivity() {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val downloadUri = task.result
-                        updateProfile(currentUser.uid, name, downloadUri, department, year)
+                        updateProfile(currentUser.uid, name, downloadUri, phone)
                     } else {
                         Toast.makeText(this, "Failed to upload image", Toast.LENGTH_SHORT).show()
                     }
                 }
         } else {
             // No new image, just update profile data
-            updateProfile(currentUser.uid, name, null, department, year)
+            updateProfile(currentUser.uid, name, null, phone)
         }
     }
 
-    private fun updateProfile(userId: String, name: String, photoUri: Uri?, department: String, year: String) {
+    private fun updateProfile(userId: String, name: String, photoUri: Uri?, phone: String) {
         // Update in Firebase Auth
         val profileUpdates = UserProfileChangeRequest.Builder()
             .setDisplayName(name)
@@ -189,8 +222,7 @@ class ProfileActivity : AppCompatActivity() {
                     // Now update in Firestore
                     val userData = hashMapOf(
                         "name" to name,
-                        "department" to department,
-                        "year" to year
+                        "phone" to phone
                     )
 
                     if (photoUri != null) {
@@ -210,6 +242,90 @@ class ProfileActivity : AppCompatActivity() {
                     Toast.makeText(this, "Failed to update profile", Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    private fun isValidPhoneNumber(phone: String): Boolean {
+        // Basic validation - adjust as needed for your requirements
+        return phone.length >= 10 && phone.all { it.isDigit() }
+    }
+
+    private fun showChangePasswordDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_change_password, null)
+        val etCurrentPassword = dialogView.findViewById<EditText>(R.id.etCurrentPassword)
+        val etNewPassword = dialogView.findViewById<EditText>(R.id.etNewPassword)
+        val etConfirmPassword = dialogView.findViewById<EditText>(R.id.etConfirmPassword)
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Change Password")
+            .setView(dialogView)
+            .setPositiveButton("Change", null) // Set to null to override default behavior
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+
+        // Override the click listener to prevent automatic dismissal on validation failure
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val currentPassword = etCurrentPassword.text.toString()
+            val newPassword = etNewPassword.text.toString()
+            val confirmPassword = etConfirmPassword.text.toString()
+
+            if (currentPassword.isEmpty()) {
+                etCurrentPassword.error = "Please enter current password"
+                return@setOnClickListener
+            }
+
+            if (newPassword.isEmpty()) {
+                etNewPassword.error = "Please enter new password"
+                return@setOnClickListener
+            }
+
+            if (newPassword.length < 6) {
+                etNewPassword.error = "Password must be at least 6 characters"
+                return@setOnClickListener
+            }
+
+            if (confirmPassword != newPassword) {
+                etConfirmPassword.error = "Passwords do not match"
+                return@setOnClickListener
+            }
+
+            // Re-authenticate before changing password
+            val user = auth.currentUser
+            if (user?.email != null) {
+                val credential = com.google.firebase.auth.EmailAuthProvider
+                    .getCredential(user.email!!, currentPassword)
+
+                user.reauthenticate(credential)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            user.updatePassword(newPassword)
+                                .addOnCompleteListener { passwordTask ->
+                                    if (passwordTask.isSuccessful) {
+                                        Toast.makeText(
+                                            this,
+                                            "Password updated successfully",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        dialog.dismiss()
+                                    } else {
+                                        Toast.makeText(
+                                            this,
+                                            "Failed to update password: ${passwordTask.exception?.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Current password is incorrect",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+            }
+        }
     }
 
     private fun signOut() {
