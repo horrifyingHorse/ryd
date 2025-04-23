@@ -48,12 +48,12 @@
             tools:backgroundTint="@color/colorAccent"
             tools:text="Upcoming" />
 
-        <!-- Add this before the existing destination TextView -->
+        <!-- From section with vertical layout -->
         <TextView
             android:id="@+id/tvFromLocationLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:text="From:"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -64,57 +64,46 @@
             android:id="@+id/tvFromLocation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tvFromLocationLabel"
-            app:layout_constraintTop_toTopOf="@+id/tvFromLocationLabel"
-            tools:text="University Campus" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvFromLocationLabel"
+            tools:text="University Campus, Some Long Address, City, State, PIN" />
 
-        <!-- Change the destination label to "To:" and update constraints -->
+        <!-- To section with vertical layout -->
         <TextView
             android:id="@+id/tvDestinationLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:text="To:"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/tvFromLocationLabel"
-            app:layout_constraintTop_toBottomOf="@+id/tvFromLocationLabel" />
-
-<!--        <TextView-->
-<!--            android:id="@+id/tvDestinationLabel"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="16dp"-->
-<!--            android:text="Destination:"-->
-<!--            android:textSize="14sp"-->
-<!--            android:textStyle="bold"-->
-<!--            app:layout_constraintStart_toStartOf="parent"-->
-<!--            app:layout_constraintTop_toBottomOf="@+id/tvRideType" />-->
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvFromLocation" />
 
         <TextView
             android:id="@+id/tvDestination"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tvDestinationLabel"
-            app:layout_constraintTop_toTopOf="@+id/tvDestinationLabel"
-            tools:text="Downtown Campus" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvDestinationLabel"
+            tools:text="Downtown Campus, Another Very Long Address That Might Wrap, City, State, PIN" />
 
         <TextView
             android:id="@+id/tvTimeLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:text="Time:"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvDestinationLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/tvDestination" />
 
         <TextView
             android:id="@+id/tvDepartureTime"
@@ -178,9 +167,6 @@
                 android:layout_weight="1"
                 android:text="Cancel"
                 android:textColor="@android:color/holo_red_light" />
-
         </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

@@ -39,6 +39,8 @@ import kotlin.text.get
 class HomeActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "HomeActivity"
+        private const val FROM_LOCATION_REQUEST_CODE = 100
+        private const val DESTINATION_LOCATION_REQUEST_CODE = 101
     }
 
     // Firebase
@@ -96,6 +98,7 @@ class HomeActivity : AppCompatActivity() {
 
         // Set up click listeners
         setupClickListeners()
+        setupLocationPickers()
 
         // Load user data
         loadUserInfo()
@@ -564,4 +567,64 @@ class HomeActivity : AppCompatActivity() {
                 Log.w(TAG, "Error getting user info", exception)
             }
     }
-}
+
+    private fun setupLocationPickers() {
+        // Set up click listener for "From" field to open the map
+        etFrom.setOnClickListener {
+            // Launch map activity for location selection
+            val intent = Intent(this, MapPickerActivity::class.java)
+            intent.putExtra("REQUEST_TYPE", "FROM_LOCATION")
+
+            // Pass current location text if it exists
+            val currentLocation = etFrom.text.toString().trim()
+            if (currentLocation.isNotEmpty()) {
+                intent.putExtra("CURRENT_LOCATION", currentLocation)
+            }
+
+            startActivityForResult(intent, FROM_LOCATION_REQUEST_CODE)
+        }
+
+        etDestination.setOnClickListener {
+            // Launch map activity for location selection
+            val intent = Intent(this, MapPickerActivity::class.java)
+            intent.putExtra("REQUEST_TYPE", "DESTINATION_LOCATION")
+
+            // Pass current destination text if it exists
+            val currentDestination = etDestination.text.toString().trim()
+            if (currentDestination.isNotEmpty()) {
+                intent.putExtra("CURRENT_LOCATION", currentDestination)
+            }
+
+            startActivityForResult(intent, DESTINATION_LOCATION_REQUEST_CODE)
+        }
+
+        // Make the EditText not focusable to prevent keyboard from showing
+        etFrom.isFocusable = false
+        etFrom.isClickable = true
+
+        etDestination.isFocusable = false
+        etDestination.isClickable = true
+    }
+
+    // Handle the result from the map picker
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                FROM_LOCATION_REQUEST_CODE -> {
+                    data?.let {
+                        val locationName = it.getStringExtra("LOCATION_NAME") ?: ""
+                        etFrom.setText(locationName)
+                    }
+                }
+                DESTINATION_LOCATION_REQUEST_CODE -> {
+                    data?.let {
+                        val locationName = it.getStringExtra("LOCATION_NAME") ?: ""
+                        etDestination.setText(locationName)
+                    }
+                }
+            }
+        }
+    }}

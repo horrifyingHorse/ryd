@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
 }
 
 android {
@@ -34,9 +35,21 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        viewBinding = true
+    }
+}
+
+configurations.all {
+    exclude(group = "com.j256.ormlite", module = "ormlite-core")
 }
 
 dependencies {
+    implementation("org.osmdroid:osmdroid-android:6.1.17")
+    implementation("org.osmdroid:osmdroid-wms:6.1.17")
+    implementation("org.osmdroid:osmdroid-mapsforge:6.1.17")
+    implementation("org.osmdroid:osmdroid-geopackage:6.1.17")
+
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage:20.3.0")
@@ -53,6 +66,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.firebase.auth)
+    implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
