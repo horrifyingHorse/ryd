@@ -1,6 +1,7 @@
 package com.example.ryd
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +17,7 @@ import java.util.*
 
 class MyRidesAdapter(
     private val rides: List<Ride>,
-    private val onRideClick: (Ride) -> Unit
+    private val onRideClick: (Ride) -> Unit,
 ) : RecyclerView.Adapter<MyRidesAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -94,7 +95,9 @@ class MyRidesAdapter(
 
         // Set click listeners
         holder.itemView.setOnClickListener { onRideClick(ride) }
-        holder.btnEdit.setOnClickListener { onRideClick(ride) }
+        holder.btnEdit.setOnClickListener {
+            editRide(holder.itemView.context, ride)
+        }
         holder.btnCancel.setOnClickListener {
             // Handle cancel differently based on status
             if (ride.status == "requested") {
@@ -149,7 +152,75 @@ class MyRidesAdapter(
     }
 
     private fun cancelRide(context: Context, ride: Ride) {
-        // Existing code to cancel a posted ride
+        val firestore = FirebaseFirestore.getInstance()
+        val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser ?: return
+
+        // Show confirmation dialog
+        androidx.appcompat.app.AlertDialog.Builder(context)
+            .setTitle("Cancel Ride")
+            .setMessage("Are you sure you want to cancel this ride?")
+            .setPositiveButton("Yes") { _, _ ->
+                // Delete the ride document
+                firestore.collection("rides").document(ride.id)
+                    .delete()
+                    .addOnSuccessListener {
+                        // Now notify any users who joined/requested this ride
+                        notifyUsersAboutCancellation(context, ride, firestore)
+                        Toast.makeText(context, "Ride canceled successfully", Toast.LENGTH_SHORT).show()
+
+                        // Remove from the activity's list will happen on activity resume/refresh
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(
+                            context,
+                            "Failed to cancel ride: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+            }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun notifyUsersAboutCancellation(context: Context, ride: Ride, firestore: FirebaseFirestore) {
+        // Get all users who requested or joined this ride
+        firestore.collection("rideRequests")
+            .whereEqualTo("rideId", ride.id)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val requesterId = document.getString("requesterId") ?: continue
+
+                    // Update the status in the user's ride collection
+                    firestore.collection("userRides")
+                        .document(requesterId)
+                        .collection("rides")
+                        .whereEqualTo("originalRideId", ride.id)
+                        .get()
+                        .addOnSuccessListener { userRidesDocs ->
+                            for (userRideDoc in userRidesDocs) {
+                                userRideDoc.reference.update("status", "cancelled by host")
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Failed to notify users about cancellation", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun editRide(context: Context, ride: Ride) {
+        val intent = Intent(context, EditRideActivity::class.java).apply {
+            putExtra("RIDE_ID", ride.id)
+            putExtra("FROM_LOCATION", ride.fromLocation)
+            putExtra("DESTINATION", ride.destination)
+            putExtra("DEPARTURE_TIME", ride.departureTime)
+            putExtra("DESCRIPTION", ride.description)
+            putExtra("IS_DRIVER", ride.isDriver)
+            putExtra("SEATS", ride.seats)
+        }
+        context.startActivity(intent)
     }
 
     override fun getItemCount() = rides.size

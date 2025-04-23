@@ -68,7 +68,6 @@ class MyRidesActivity : AppCompatActivity() {
         loadRides(isActive = true)
     }
 
-
     private fun setupTabs() {
         tabLayout.addTab(tabLayout.newTab().setText("Active"))
         tabLayout.addTab(tabLayout.newTab().setText("Past"))
@@ -94,45 +93,6 @@ class MyRidesActivity : AppCompatActivity() {
         pgBar.visibility = View.VISIBLE
         ridesList.clear()
 
-//        val query = if (isActive) {
-//            firestore.collection("rides")
-//                .whereEqualTo("userId", currentUser.uid)
-//                .whereGreaterThan("departureTime", currentTime)
-//                .orderBy("departureTime", Query.Direction.ASCENDING)
-//        } else {
-//            firestore.collection("rides")
-//                .whereEqualTo("userId", currentUser.uid)
-//                .whereLessThan("departureTime", currentTime)
-//                .orderBy("departureTime", Query.Direction.DESCENDING)
-//        }
-//
-//        query.get()
-//            .addOnSuccessListener { documents ->
-//                ridesList.clear()
-//
-//                for (document in documents) {
-//                    val ride = document.toObject(Ride::class.java).apply {
-//                        id = document.id
-//                    }
-//                    ridesList.add(ride)
-//                }
-//
-//                if (ridesList.isEmpty()) {
-//                    pgBar.visibility = View.GONE
-//                    val message = if (isActive) "You have no active rides" else "You have no past rides"
-//                    showNoRides(message)
-//                } else {
-//                    pgBar.visibility = View.GONE
-//                    tvNoRides.visibility = View.GONE
-//                    rvMyRides.visibility = View.VISIBLE
-//                    ridesAdapter.notifyDataSetChanged()
-//                }
-//            }
-//            .addOnFailureListener { e ->
-//                pgBar.visibility = View.GONE
-//                showNoRides("Error loading rides: ${e.message}")
-//                Log.e("MyRidesActivity", "Error loading rides", e)
-//            }
         val postedRidesQuery = if (isActive) {
             firestore.collection("rides")
                 .whereEqualTo("userId", currentUser.uid)
@@ -235,5 +195,10 @@ class MyRidesActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    fun refreshRides() {
+        val currentTab = tabLayout.selectedTabPosition
+        loadRides(isActive = currentTab == 0)
     }
 }

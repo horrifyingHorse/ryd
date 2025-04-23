@@ -72,7 +72,6 @@ class ProfileActivity : AppCompatActivity() {
         btnSaveProfile = findViewById(R.id.btnSaveProfile)
         btnSignOut = findViewById(R.id.btnSignOut)
 
-        val etPhone = findViewById<EditText>(R.id.etPhone)
         val btnChangePassword = findViewById<Button>(R.id.btnChangePassword)
 
         // Setup toolbar
