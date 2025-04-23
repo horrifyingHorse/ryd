@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
@@ -16,14 +17,13 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <com.google.android.material.imageview.ShapeableImageView
+        <!-- User Info Section -->
+        <ImageView
             android:id="@+id/ivUserPhoto"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:scaleType="centerCrop"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/CircleImageView"
             tools:src="@tools:sample/avatars" />
 
         <TextView
@@ -33,102 +33,135 @@
             android:layout_marginStart="12dp"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/tvMatchPercent"
+            app:layout_constraintEnd_toStartOf="@+id/chipRideType"
             app:layout_constraintStart_toEndOf="@+id/ivUserPhoto"
             app:layout_constraintTop_toTopOf="@+id/ivUserPhoto"
-            tools:text="Jane Doe" />
+            tools:text="John Smith" />
 
-        <TextView
-            android:id="@+id/tvUserType"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipRideType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_badge"
-            android:paddingStart="8dp"
-            android:paddingTop="2dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="2dp"
-            android:textColor="@color/white"
+            android:textColor="@android:color/white"
             android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="@+id/tvUserName"
-            app:layout_constraintTop_toBottomOf="@+id/tvUserName"
+            app:chipBackgroundColor="@color/colorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="Driver" />
 
+        <!-- Match Score Section -->
         <TextView
-            android:id="@+id/tvMatchPercent"
+            android:id="@+id/tvMatchScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
             android:textColor="@color/colorAccent"
-            android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvUserName"
-            tools:text="90% Match" />
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:background="?android:attr/listDivider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivUserPhoto" />
+            app:layout_constraintStart_toEndOf="@+id/ivUserPhoto"
+            app:layout_constraintTop_toBottomOf="@+id/tvUserName"
+            tools:text="85% match" />
 
         <TextView
-            android:id="@+id/tvDestinationLabel"
+            android:id="@+id/tvMatchType"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tvMatchScore"
+            app:layout_constraintTop_toBottomOf="@+id/tvMatchScore"
+            tools:text="Direct match! Same start and end points" />
+        <!-- Divider -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="22dp"
+            android:background="@android:color/darker_gray"
+            android:alpha="0.2"
+            app:layout_constraintTop_toBottomOf="@+id/ivUserPhoto" />
+
+        <!-- Route Section -->
+        <TextView
+            android:id="@+id/tvFromLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Destination:"
+            android:text="From:"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider" />
 
         <TextView
+            android:id="@+id/tvFromLocation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvFromLabel"
+            tools:text="University Campus, Some Long Address, City, State, PIN" />
+
+        <TextView
+            android:id="@+id/tvToLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="To:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvFromLocation" />
+
+        <TextView
             android:id="@+id/tvDestination"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tvDestinationLabel"
-            app:layout_constraintTop_toTopOf="@+id/tvDestinationLabel"
-            tools:text="North Campus Library" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvToLabel"
+            tools:text="Downtown Campus, Another Very Long Address, City, State, PIN" />
 
         <TextView
             android:id="@+id/tvTimeLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Departure:"
+            android:text="Time:"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/tvDestinationLabel"
-            app:layout_constraintTop_toBottomOf="@+id/tvDestinationLabel" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvDestination" />
 
         <TextView
             android:id="@+id/tvDepartureTime"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tvTimeLabel"
-            app:layout_constraintTop_toTopOf="@+id/tvTimeLabel"
-            tools:text="Wed, Apr 22, 3:30 PM" />
-
-        <Button
-            android:id="@+id/btnContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Contact"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvTimeLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/tvTimeLabel"
+            tools:text="Wed, Apr 22, 2025 at 3:30 PM" />
+
+        <!-- View Ride Button -->
+        <Button
+            android:id="@+id/btnViewRide"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="View Details"
+            app:layout_constraintTop_toBottomOf="@+id/tvDepartureTime" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

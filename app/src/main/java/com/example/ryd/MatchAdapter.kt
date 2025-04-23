@@ -4,14 +4,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.ryd.HomeActivity.RideMatch
+import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Adapter for matches
 class MatchAdapter(
-    private val matches: List<Ride>,
-    private val onMatchClick: (Ride) -> Unit
+    private val matches: List<RideMatch>,
+    private val onRideClicked: (RideMatch) -> Unit
 ) : RecyclerView.Adapter<MatchAdapter.MatchViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MatchViewHolder {
@@ -21,40 +26,57 @@ class MatchAdapter(
     }
 
     override fun onBindViewHolder(holder: MatchViewHolder, position: Int) {
-        holder.bind(matches[position])
+        val match = matches[position]
+        holder.bind(match)
     }
 
-    override fun getItemCount(): Int = matches.size
+    override fun getItemCount() = matches.size
 
     inner class MatchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
-        private val tvUserType: TextView = itemView.findViewById(R.id.tvUserType)
-        private val tvFrom: TextView = itemView.findViewById(R.id.tvFromLocation)
+        private val tvFromLocation: TextView = itemView.findViewById(R.id.tvFromLocation)
         private val tvDestination: TextView = itemView.findViewById(R.id.tvDestination)
-        private val tvDepartureTime: TextView = itemView.findViewById(R.id.tvDepartureTime)
-        private val tvMatchPercent: TextView = itemView.findViewById(R.id.tvMatchPercent)
-        private val btnContact: Button = itemView.findViewById(R.id.btnContact)
+        private val tvTime: TextView = itemView.findViewById(R.id.tvDepartureTime)
+        private val tvMatchType: TextView = itemView.findViewById(R.id.tvMatchType)
+        private val tvMatchScore: TextView = itemView.findViewById(R.id.tvMatchScore)
+        private val ivUserPhoto: ImageView = itemView.findViewById(R.id.ivUserPhoto)
+        private val rideTypeChip: Chip = itemView.findViewById(R.id.chipRideType)
 
-        fun bind(match: Ride) {
-            tvUserName.text = match.userName
-            tvUserType.text = if (match.isDriver) "Driver" else "Passenger"
-            tvFrom.text = match.fromLocation
-            tvDestination.text = match.destination
+        fun bind(match: RideMatch) {
+            val ride = match.ride
 
-            val dateFormat = SimpleDateFormat("EEE, MMM d, h:mm a", Locale.getDefault())
-            tvDepartureTime.text = dateFormat.format(Date(match.departureTime))
+            // Set user information
+            tvUserName.text = ride.userName
 
-            // For demonstration purposes - match percentage is random
-            val matchPercent = (70..100).random()
-            tvMatchPercent.text = "$matchPercent% Match"
+            // Set locations
+            tvFromLocation.text = ride.fromLocation
+            tvDestination.text = ride.destination
 
-            btnContact.setOnClickListener {
-                onMatchClick(match)
+            // Set time
+            val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.getDefault())
+            tvTime.text = dateFormat.format(Date(ride.departureTime))
+
+            // Set match info
+            tvMatchType.text = match.matchType
+            tvMatchScore.text = "${match.score}% match"
+
+            // Set ride type
+            rideTypeChip.text = if (ride.isDriver) "Driver" else "Passenger"
+
+            // Set user photo
+            if (ride.userPhoto.isNotEmpty()) {
+                Glide.with(itemView.context)
+                    .load(ride.userPhoto)
+                    .placeholder(R.drawable.default_profile)
+                    .error(R.drawable.default_profile)
+                    .circleCrop()
+                    .into(ivUserPhoto)
+            } else {
+                ivUserPhoto.setImageResource(R.drawable.default_profile)
             }
 
-            itemView.setOnClickListener {
-                onMatchClick(match)
-            }
+            // Set click listener
+            itemView.setOnClickListener { onRideClicked(match) }
         }
     }
 }

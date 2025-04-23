@@ -1,7 +1,10 @@
 package com.example.ryd
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -32,6 +35,7 @@ import com.google.android.material.timepicker.TimeFormat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import org.osmdroid.util.GeoPoint
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.text.get
@@ -130,60 +134,9 @@ class HomeActivity : AppCompatActivity() {
                 btnPostRide.text = "Post Ride"
             }
 
-            // Implement logic to find matches without creating a ride
-            // You could open a dialog or new activity showing matched rides
-            val fromLocation = etFrom.text.toString().trim()
-            val destination = etDestination.text.toString().trim()
-
-            if (fromLocation.isEmpty()) {
-                etFrom.error = "Please enter a starting location"
-                return@setOnClickListener
-            }
-            if (destination.isEmpty()) {
-                etDestination.error = "Please enter a destination"
-                return@setOnClickListener
-            }
-
-            // Show a loading dialog
-            val loadingDialog = MaterialAlertDialogBuilder(this)
-                .setTitle("Finding Matches")
-                .setMessage("Searching for rides to $destination...")
-                .setCancelable(false)
-                .show()
-
-            // Search for matches in Firestore
-            firestore.collection("rides")
-                .whereEqualTo("fromLocation", fromLocation)
-                .whereEqualTo("destination", destination)
-                .whereGreaterThan("departureTime", System.currentTimeMillis())
-                .orderBy("departureTime", Query.Direction.ASCENDING)
-                .get()
-                .addOnSuccessListener { documents ->
-                    loadingDialog.dismiss()
-
-                    if (documents.isEmpty) {
-                        Toast.makeText(
-                            this,
-                            "No matches found for $destination",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        // You can navigate to a results screen or show a dialog with matches
-                        Toast.makeText(
-                            this,
-                            "Found ${documents.size()} potential matches!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        // Implement navigation to results screen here
-                    }
-                }
-                .addOnFailureListener { e ->
-                    loadingDialog.dismiss()
-                    Toast.makeText(this, "Error finding matches: ${e.message}", Toast.LENGTH_SHORT)
-                        .show()
-                }
+            // Use our new advanced matching function
+            findMatches()
         }
-
     }
 
     override fun onStart() {
@@ -627,4 +580,297 @@ class HomeActivity : AppCompatActivity() {
                 }
             }
         }
-    }}
+    }
+    // Add this method to HomeActivity.kt
+    private fun findMatches() {
+        // Get current input values
+        val fromLocation = etFrom.text.toString().trim()
+        val destination = etDestination.text.toString().trim()
+        val departureTime = if (selectedDate > 0) {
+            // Combine date and time for comparison
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = selectedDate
+            calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
+            calendar.set(Calendar.MINUTE, selectedMinute)
+            calendar.timeInMillis
+        } else {
+            System.currentTimeMillis()
+        }
+
+        // Validate inputs
+        if (fromLocation.isEmpty()) {
+            etFrom.error = "Please enter a starting location"
+            return
+        }
+
+        if (destination.isEmpty()) {
+            etDestination.error = "Please enter a destination"
+            return
+        }
+
+        // Show loading dialog
+        val loadingDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Finding Matches")
+            .setMessage("Searching for rides...")
+            .setCancelable(false)
+            .show()
+
+        // Step 1: Get coordinates for the from location and destination
+        getCoordinatesForLocation(fromLocation) { fromCoordinates ->
+            if (fromCoordinates == null) {
+                loadingDialog.dismiss()
+                Toast.makeText(this, "Could not find coordinates for starting location", Toast.LENGTH_SHORT).show()
+                return@getCoordinatesForLocation
+            }
+
+            getCoordinatesForLocation(destination) { destCoordinates ->
+                if (destCoordinates == null) {
+                    loadingDialog.dismiss()
+                    Toast.makeText(this, "Could not find coordinates for destination", Toast.LENGTH_SHORT).show()
+                    return@getCoordinatesForLocation
+                }
+
+                // Step 2: Query all upcoming rides
+                firestore.collection("rides")
+                    .whereGreaterThan("departureTime", System.currentTimeMillis())
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        val currentUser = auth.currentUser ?: return@addOnSuccessListener
+                        val matchedRides = mutableListOf<RideMatch>()
+
+                        // Process each ride for matching
+                        for (document in documents) {
+                            // Skip rides created by the current user
+                            if (document.getString("userId") == currentUser.uid) {
+                                continue
+                            }
+
+                            val ride = document.toObject(Ride::class.java).apply {
+                                id = document.id
+                            }
+
+                            // Get coordinates for ride's from location
+                            getCoordinatesForLocation(ride.fromLocation) { rideFromCoords ->
+                                if (rideFromCoords != null) {
+                                    // Get coordinates for ride's destination
+                                    getCoordinatesForLocation(ride.destination) { rideDestCoords ->
+                                        if (rideDestCoords != null) {
+                                            // Calculate match scores and create RideMatch objects
+                                            val matchScore = calculateMatchScore(
+                                                fromCoordinates, destCoordinates,
+                                                rideFromCoords, rideDestCoords,
+                                                departureTime, ride.departureTime
+                                            )
+
+                                            if (matchScore > 0) {
+                                                val matchType = determineMatchType(
+                                                    fromCoordinates, destCoordinates,
+                                                    rideFromCoords, rideDestCoords
+                                                )
+
+                                                matchedRides.add(
+                                                    RideMatch(
+                                                        ride = ride,
+                                                        score = matchScore,
+                                                        matchType = matchType
+                                                    )
+                                                )
+
+                                                // When we've processed the last ride, show results
+                                                if (matchedRides.size == documents.size() - 1) {
+                                                    loadingDialog.dismiss()
+                                                    showMatchResults(matchedRides)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // If no rides found or all processed with no matches
+                        if (documents.isEmpty()) {
+                            loadingDialog.dismiss()
+                            Toast.makeText(
+                                this,
+                                "No rides found matching your criteria",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        loadingDialog.dismiss()
+                        Toast.makeText(this, "Error finding matches: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+
+    // Geocode address to coordinates
+    private fun getCoordinatesForLocation(locationName: String, callback: (GeoPoint?) -> Unit) {
+        val geocoder = android.location.Geocoder(this, Locale.getDefault())
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocationName(locationName, 1) { addresses ->
+                    if (addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        callback(GeoPoint(address.latitude, address.longitude))
+                    } else {
+                        callback(null)
+                    }
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocationName(locationName, 1)
+                if (addresses != null && addresses.isNotEmpty()) {
+                    val address = addresses[0]
+                    callback(GeoPoint(address.latitude, address.longitude))
+                } else {
+                    callback(null)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Geocoding error: ${e.message}")
+            callback(null)
+        }
+    }
+
+    // Calculate match score (0-100) based on proximity and time
+    private fun calculateMatchScore(
+        fromCoords: GeoPoint, destCoords: GeoPoint,
+        rideFromCoords: GeoPoint, rideDestCoords: GeoPoint,
+        requestedTime: Long, rideTime: Long
+    ): Int {
+        // Distance match (0-50 points)
+        val fromDistance = calculateDistance(fromCoords, rideFromCoords)
+        val destDistance = calculateDistance(destCoords, rideDestCoords)
+
+        // Give more points for closer origins and destinations
+        val maxFromDistance = 5.0 // 5 km max distance for starting point
+        val maxDestDistance = 5.0 // 5 km max distance for destination
+
+        val fromScore = (((maxFromDistance - Math.min(fromDistance, maxFromDistance)) / maxFromDistance) * 25).toInt()
+        val destScore = (((maxDestDistance - Math.min(destDistance, maxDestDistance)) / maxDestDistance) * 25).toInt()
+
+        // Time match (0-50 points)
+        val timeDifferenceHours = Math.abs(requestedTime - rideTime) / (1000.0 * 60 * 60)
+        val timeScore = if (timeDifferenceHours <= 24) {
+            ((24 - timeDifferenceHours) / 24 * 50).toInt()
+        } else {
+            0
+        }
+
+        return fromScore + destScore + timeScore
+    }
+
+    // Compute distance between two points in kilometers using Haversine formula
+    private fun calculateDistance(point1: GeoPoint, point2: GeoPoint): Double {
+        val earthRadius = 6371.0 // Earth's radius in kilometers
+
+        val lat1 = Math.toRadians(point1.latitude)
+        val lon1 = Math.toRadians(point1.longitude)
+        val lat2 = Math.toRadians(point2.latitude)
+        val lon2 = Math.toRadians(point2.longitude)
+
+        val dLat = lat2 - lat1
+        val dLon = lon2 - lon1
+
+        val a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon/2) * Math.sin(dLon/2)
+
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+        return earthRadius * c
+    }
+
+    // Determine what type of match this is
+    private fun determineMatchType(
+        fromCoords: GeoPoint, destCoords: GeoPoint,
+        rideFromCoords: GeoPoint, rideDestCoords: GeoPoint
+    ): String {
+        val fromDistance = calculateDistance(fromCoords, rideFromCoords)
+        val destDistance = calculateDistance(destCoords, rideDestCoords)
+
+        // Check if the ride passes near the user's destination
+        val isOnRoute = isPointOnRoute(fromCoords, rideFromCoords, rideDestCoords)
+
+        return when {
+            fromDistance < 1.0 && destDistance < 1.0 ->
+                "Direct match! Same start and end points"
+            fromDistance < 1.0 ->
+                "Same pickup point, different destination"
+            destDistance < 1.0 ->
+                "Different pickup, same destination"
+            isOnRoute ->
+                "This ride passes near your destination"
+            else ->
+                "Nearby route"
+        }
+    }
+
+    // Check if a point is roughly on a route between two other points
+    private fun isPointOnRoute(point: GeoPoint, routeStart: GeoPoint, routeEnd: GeoPoint): Boolean {
+        // Calculate distances
+        val distanceStartToEnd = calculateDistance(routeStart, routeEnd)
+        val distanceStartToPoint = calculateDistance(routeStart, point)
+        val distancePointToEnd = calculateDistance(point, routeEnd)
+
+        // If the point is on the route, the sum of distances should be close to the total route distance
+        val buffer = 1.5 // Allow for some deviation (1.5km)
+        return distanceStartToPoint + distancePointToEnd <= distanceStartToEnd + buffer
+    }
+
+    // Show results to the user
+    private fun showMatchResults(matches: List<RideMatch>) {
+        if (matches.isEmpty()) {
+            Toast.makeText(
+                this,
+                "No matches found for your route",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        // Sort matches by score (highest first)
+        val sortedMatches = matches.sortedByDescending { it.score }
+
+        // Create an intent to show match results
+        val intent = Intent(this, MatchesActivity::class.java)
+        intent.putParcelableArrayListExtra("matches", ArrayList(sortedMatches))
+        startActivity(intent)
+    }
+
+    // Data class for ride matches
+    data class RideMatch(
+        val ride: Ride,
+        val score: Int,
+        val matchType: String
+    ) : Parcelable {
+        constructor(parcel: Parcel) : this(
+            parcel.readParcelable(Ride::class.java.classLoader)!!,
+            parcel.readInt(),
+            parcel.readString()!!
+        )
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeParcelable(ride, flags)
+            parcel.writeInt(score)
+            parcel.writeString(matchType)
+        }
+
+        override fun describeContents(): Int {
+            return 0
+        }
+
+        companion object CREATOR : Parcelable.Creator<RideMatch> {
+            override fun createFromParcel(parcel: Parcel): RideMatch {
+                return RideMatch(parcel)
+            }
+
+            override fun newArray(size: Int): Array<RideMatch?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+}
