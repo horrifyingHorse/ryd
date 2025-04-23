@@ -14,14 +14,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.google.firebase.auth.FirebaseAuth
@@ -29,6 +34,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.text.get
 
 class HomeActivity : AppCompatActivity() {
     companion object {
@@ -46,9 +52,10 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var fabAddRide: FloatingActionButton
     private lateinit var tvUsername: TextView
     private lateinit var tvUserDepartment: TextView
+    private lateinit var etFrom: TextInputEditText
     private lateinit var etDestination: TextInputEditText
     private lateinit var etDepartureTime: TextInputEditText
-    private lateinit var etSeats: TextInputEditText
+    private lateinit var etDescription: TextInputEditText
     private lateinit var chipDriver: Chip
     private lateinit var chipPassenger: Chip
     private lateinit var btnCreateRide: Button
@@ -72,6 +79,12 @@ class HomeActivity : AppCompatActivity() {
             insets
         }
 
+        val descriptionInputLayout = findViewById<TextInputLayout>(R.id.descriptionInputLayout)
+        val btnPostRide = findViewById<MaterialButton>(R.id.btnPostRide)
+        val btnFindMatches = findViewById<MaterialButton>(R.id.btnFindMatches)
+
+        descriptionInputLayout.visibility = View.GONE
+
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
@@ -89,6 +102,85 @@ class HomeActivity : AppCompatActivity() {
 
         // Load available rides
         loadAvailableRides()
+
+        btnPostRide.setOnClickListener {
+            // If description is hidden, show it and change button text
+            if (descriptionInputLayout.visibility == View.GONE) {
+                descriptionInputLayout.visibility = View.VISIBLE
+                btnPostRide.text = "Confirm Post"
+
+                // Smooth scroll to show the description field
+                val nestedScrollView = findViewById<NestedScrollView>(R.id.nestedScrollView)
+                nestedScrollView?.post {
+                    nestedScrollView.smoothScrollTo(0, descriptionInputLayout.top)
+                }
+            } else {
+                // Description is already showing, proceed with creating the ride
+                createRide()
+            }
+        }
+
+        btnFindMatches.setOnClickListener {
+            // Hide description if it's visible
+            if (descriptionInputLayout.visibility == View.VISIBLE) {
+                descriptionInputLayout.visibility = View.GONE
+                btnPostRide.text = "Post Ride"
+            }
+
+            // Implement logic to find matches without creating a ride
+            // You could open a dialog or new activity showing matched rides
+            val fromLocation = etFrom.text.toString().trim()
+            val destination = etDestination.text.toString().trim()
+
+            if (fromLocation.isEmpty()) {
+                etFrom.error = "Please enter a starting location"
+                return@setOnClickListener
+            }
+            if (destination.isEmpty()) {
+                etDestination.error = "Please enter a destination"
+                return@setOnClickListener
+            }
+
+            // Show a loading dialog
+            val loadingDialog = MaterialAlertDialogBuilder(this)
+                .setTitle("Finding Matches")
+                .setMessage("Searching for rides to $destination...")
+                .setCancelable(false)
+                .show()
+
+            // Search for matches in Firestore
+            firestore.collection("rides")
+                .whereEqualTo("fromLocation", fromLocation)
+                .whereEqualTo("destination", destination)
+                .whereGreaterThan("departureTime", System.currentTimeMillis())
+                .orderBy("departureTime", Query.Direction.ASCENDING)
+                .get()
+                .addOnSuccessListener { documents ->
+                    loadingDialog.dismiss()
+
+                    if (documents.isEmpty) {
+                        Toast.makeText(
+                            this,
+                            "No matches found for $destination",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        // You can navigate to a results screen or show a dialog with matches
+                        Toast.makeText(
+                            this,
+                            "Found ${documents.size()} potential matches!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        // Implement navigation to results screen here
+                    }
+                }
+                .addOnFailureListener { e ->
+                    loadingDialog.dismiss()
+                    Toast.makeText(this, "Error finding matches: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
+                }
+        }
+
     }
 
     override fun onStart() {
@@ -108,12 +200,13 @@ class HomeActivity : AppCompatActivity() {
         fabAddRide = findViewById(R.id.fabAddRide)
         tvUsername = findViewById(R.id.tvUsername)
         tvUserDepartment = findViewById(R.id.tvUserDepartment)
+        etFrom = findViewById(R.id.etFrom)
         etDestination = findViewById(R.id.etDestination)
+        etDescription = findViewById(R.id.etDescription)
         etDepartureTime = findViewById(R.id.etDepartureTime)
-        etSeats = findViewById(R.id.etSeats)
         chipDriver = findViewById(R.id.chipDriver)
         chipPassenger = findViewById(R.id.chipPassenger)
-        btnCreateRide = findViewById(R.id.btnCreateRide)
+        btnCreateRide = findViewById(R.id.btnFindMatches)
         rvAvailableRides = findViewById(R.id.rvAvailableRides)
         noRidesLayout = findViewById(R.id.noRidesLayout)
 
@@ -171,7 +264,7 @@ class HomeActivity : AppCompatActivity() {
         chipDriver.setOnCheckedChangeListener { chip, isChecked ->
             if (isChecked) {
                 chipPassenger.isChecked = false
-                etSeats.visibility = View.VISIBLE
+//                etSeats.visibility = View.VISIBLE
             } else if (!chipPassenger.isChecked) {
                 chip.isChecked = true // Ensure at least one is selected
             }
@@ -180,7 +273,7 @@ class HomeActivity : AppCompatActivity() {
         chipPassenger.setOnCheckedChangeListener { chip, isChecked ->
             if (isChecked) {
                 chipDriver.isChecked = false
-                etSeats.visibility = View.GONE
+//                etSeats.visibility = View.GONE
             } else if (!chipDriver.isChecked) {
                 chip.isChecked = true // Ensure at least one is selected
             }
@@ -190,6 +283,8 @@ class HomeActivity : AppCompatActivity() {
     private fun loadUserData() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
+            Log.d(TAG, "Current user: UID=${currentUser.uid}, displayName=${currentUser.displayName}, email=${currentUser.email}")
+
             // Display user email while profile loads
             tvUsername.text = "Hi, ${currentUser.displayName ?: currentUser.email?.substringBefore('@') ?: "User"}"
 
@@ -308,6 +403,12 @@ class HomeActivity : AppCompatActivity() {
         val currentUser = auth.currentUser ?: return
 
         // Validate inputs
+        val fromLocation = etFrom.text.toString().trim()
+        if (fromLocation.isEmpty()) {
+            etFrom.error = "Please enter a starting location"
+            return
+        }
+
         val destination = etDestination.text.toString().trim()
         if (destination.isEmpty()) {
             etDestination.error = "Please enter a destination"
@@ -334,19 +435,19 @@ class HomeActivity : AppCompatActivity() {
 
         // Get ride type and seats
         val isDriver = chipDriver.isChecked
-        var seats = 0
+        val description = findViewById<TextInputEditText>(R.id.etDescription).text.toString().trim()
 
         if (isDriver) {
-            val seatsText = etSeats.text.toString()
-            if (seatsText.isEmpty()) {
-                etSeats.error = "Please enter available seats"
-                return
-            }
-            seats = seatsText.toIntOrNull() ?: 0
-            if (seats <= 0) {
-                etSeats.error = "Must have at least 1 seat"
-                return
-            }
+//            val seatsText = etSeats.text.toString()
+//            if (seatsText.isEmpty()) {
+//                etSeats.error = "Please enter available seats"
+//                return
+//            }
+//            seats = seatsText.toIntOrNull() ?: 0
+//            if (seats <= 0) {
+//                etSeats.error = "Must have at least 1 seat"
+//                return
+//            }
         }
 
         // Create ride object
@@ -355,10 +456,12 @@ class HomeActivity : AppCompatActivity() {
             userId = currentUser.uid,
             userName = currentUser.displayName ?: "Anonymous",
             userPhoto = currentUser.photoUrl?.toString() ?: "",
+            fromLocation = fromLocation,
             destination = destination,
             departureTime = departureTime,
             isDriver = isDriver,
-            seats = seats,
+            seats = 1,
+            description = description,
             timestamp = System.currentTimeMillis()
         )
 
@@ -370,9 +473,10 @@ class HomeActivity : AppCompatActivity() {
                 Toast.makeText(this, "Ride created successfully!", Toast.LENGTH_SHORT).show()
 
                 // Clear inputs
+                etFrom.text?.clear()
                 etDestination.text?.clear()
                 etDepartureTime.text?.clear()
-                etSeats.text?.clear()
+                etDescription.text?.clear()
                 selectedDate = 0
 
                 // Refresh available rides
@@ -392,7 +496,7 @@ class HomeActivity : AppCompatActivity() {
             .setTitle("Find Matches")
             .setMessage("Would you like to see potential matches for your ride?")
             .setPositiveButton("Yes") { _, _ ->
-//                startActivity(Intent(this, MatchesActivity::class.java))
+                startActivity(Intent(this, MatchesActivity::class.java))
             }
             .setNegativeButton("Later", null)
             .show()
@@ -400,9 +504,9 @@ class HomeActivity : AppCompatActivity() {
 
     private fun onRideSelected(ride: Ride) {
         // Open ride details or request dialog
-//        val intent = Intent(this, RideDetailActivity::class.java)
-//        intent.putExtra("RIDE_ID", ride.id)
-//        startActivity(intent)
+        val intent = Intent(this, RideDetailActivity::class.java)
+        intent.putExtra("rideId", ride.id)
+        startActivity(intent)
     }
 
     private fun handleBottomNavigation(item: MenuItem): Boolean {
@@ -448,4 +552,14 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        // Reset bottom navigation selection to Home when returning to this activity
+        bottomNavView.selectedItemId = R.id.nav_home
+
+        // Refresh data if needed
+//        loadUserData()
+//        loadAvailableRides()
+    }
 }

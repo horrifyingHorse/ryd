@@ -29,6 +29,7 @@ class MatchAdapter(
     inner class MatchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
         private val tvUserType: TextView = itemView.findViewById(R.id.tvUserType)
+        private val tvFrom: TextView = itemView.findViewById(R.id.tvFromLocation)
         private val tvDestination: TextView = itemView.findViewById(R.id.tvDestination)
         private val tvDepartureTime: TextView = itemView.findViewById(R.id.tvDepartureTime)
         private val tvMatchPercent: TextView = itemView.findViewById(R.id.tvMatchPercent)
@@ -37,6 +38,7 @@ class MatchAdapter(
         fun bind(match: Ride) {
             tvUserName.text = match.userName
             tvUserType.text = if (match.isDriver) "Driver" else "Passenger"
+            tvFrom.text = match.fromLocation
             tvDestination.text = match.destination
 
             val dateFormat = SimpleDateFormat("EEE, MMM d, h:mm a", Locale.getDefault())

@@ -33,6 +33,7 @@ class RideAdapter(
         private val tvRiderName: TextView = itemView.findViewById(R.id.tvRiderName)
         private val tvRiderDept: TextView = itemView.findViewById(R.id.tvRiderDept)
         private val tvRideType: TextView = itemView.findViewById(R.id.tvRideType)
+        private val tvFrom: TextView = itemView.findViewById(R.id.tvFromLocation)
         private val tvDestination: TextView = itemView.findViewById(R.id.tvDestination)
         private val tvDepartureTime: TextView = itemView.findViewById(R.id.tvDepartureTime)
         private val tvSeatsAvailable: TextView = itemView.findViewById(R.id.tvSeatsAvailable)
@@ -55,6 +56,7 @@ class RideAdapter(
             tvRideType.text = if (ride.isDriver) "Driver" else "Passenger"
 
             // Set destination
+            tvFrom.text = ride.fromLocation
             tvDestination.text = ride.destination
 
             // Format departure time

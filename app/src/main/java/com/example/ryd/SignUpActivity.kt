@@ -16,6 +16,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -24,6 +26,8 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
     private lateinit var etConfirmPassword: EditText
+    private lateinit var etFullName: EditText
+    private lateinit var etUserName: EditText
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,9 +59,9 @@ class SignUpActivity : AppCompatActivity() {
         tvTitle.paint.shader = textShader
 
         val tvSignIn = findViewById<TextView>(R.id.tvSignIn)
-        val etFullName = findViewById<EditText>(R.id.etName)
+        etFullName = findViewById<EditText>(R.id.etName)
         etEmail = findViewById<EditText>(R.id.etEmail)
-        val etUserName = findViewById<EditText>(R.id.etUsername)
+        etUserName = findViewById<EditText>(R.id.etUsername)
         etPassword = findViewById<EditText>(R.id.etPassword)
         etConfirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
         val cbTnC = findViewById<CheckBox>(R.id.cbAgreeToTerms)
@@ -141,9 +145,45 @@ class SignUpActivity : AppCompatActivity() {
     private fun signUpUser() {
         val email = etEmail.text.toString()
         val pass = etPassword.text.toString()
+        val username = etUserName.text.toString()
+        val fullName = etFullName.text.toString()
 
         auth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener(this) {
             if (it.isSuccessful) {
+                val user = auth.currentUser
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(fullName)
+                    .build()
+                user?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
+                    // Store additional user data in Firestore
+                    val userData = hashMapOf(
+                        "name" to fullName,
+                        "username" to username,
+                        "email" to email,
+                        "createdAt" to System.currentTimeMillis()
+                    )
+                    val db = FirebaseFirestore.getInstance()
+                    user.uid.let { uid ->
+                        db.collection("users").document(uid)
+                            .set(userData)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Successfully Signed Up", Toast.LENGTH_SHORT)
+                                    .show()
+
+                                // Navigate to home activity
+                                val intent = Intent(this, HomeActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(
+                                    this,
+                                    "Failed to save user data: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    }
+                }
                 Toast.makeText(this, "Successfully Singed Up", Toast.LENGTH_SHORT).show()
                 finish()
             } else {

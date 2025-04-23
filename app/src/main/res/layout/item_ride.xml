@@ -68,9 +68,33 @@
             android:layout_marginVertical="12dp"
             android:background="#E0E0E0" />
 
+        <!-- Add this right after the first <View> divider and before the destination section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_location"
+                app:tint="@color/colorPrimary" />
+
+            <TextView
+                android:id="@+id/tvFromLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="University Campus"
+                android:textAppearance="?attr/textAppearanceBody2" />
+        </LinearLayout>
+
+        <!-- Then the destination layout with a "To:" prefix -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
             <ImageView
