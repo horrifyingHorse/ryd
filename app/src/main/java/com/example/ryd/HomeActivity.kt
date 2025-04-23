@@ -98,7 +98,7 @@ class HomeActivity : AppCompatActivity() {
         setupClickListeners()
 
         // Load user data
-        loadUserData()
+        loadUserInfo()
 
         // Load available rides
         loadAvailableRides()
@@ -277,40 +277,6 @@ class HomeActivity : AppCompatActivity() {
             } else if (!chipDriver.isChecked) {
                 chip.isChecked = true // Ensure at least one is selected
             }
-        }
-    }
-
-    private fun loadUserData() {
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            Log.d(TAG, "Current user: UID=${currentUser.uid}, displayName=${currentUser.displayName}, email=${currentUser.email}")
-
-            // Display user email while profile loads
-            tvUsername.text = "Hi, ${currentUser.displayName ?: currentUser.email?.substringBefore('@') ?: "User"}"
-
-            // Load user profile from Firestore
-            firestore.collection("users")
-                .document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val name = document.getString("name")
-                        val department = document.getString("department")
-
-                        // Update UI with user data
-                        if (!name.isNullOrEmpty()) {
-                            tvUsername.text = "Hi, $name"
-                        }
-                        if (!department.isNullOrEmpty()) {
-                            tvUserDepartment.text = department
-                        } else {
-                            tvUserDepartment.text = "University Student"
-                        }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.w(TAG, "Error loading user data", e)
-                }
         }
     }
 
@@ -561,5 +527,41 @@ class HomeActivity : AppCompatActivity() {
         // Refresh data if needed
 //        loadUserData()
 //        loadAvailableRides()
+    }
+
+    private fun loadUserInfo() {
+        val currentUser = auth.currentUser ?: return
+
+        firestore.collection("users")
+            .document(currentUser.uid)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    // Get user's name for the "Hi, [name]" greeting
+                    val userName = document.getString("name") ?: currentUser.displayName ?: "User"
+                    val greeting = findViewById<TextView>(R.id.tvUsername)
+                    greeting.text = "Hi, $userName"
+
+                    // Extract academic year and branch
+                    val academicYear = document.getLong("academicYear")?.toInt() ?: 0
+                    val branch = document.getString("branch") ?: "Unknown"
+
+                    // Format the year text
+                    val yearText = when (academicYear) {
+                        1 -> "1st year"
+                        2 -> "2nd year"
+                        3 -> "3rd year"
+                        4 -> "4th year"
+                        else -> "$academicYear year"
+                    }
+
+                    // Update the subtitle text with academic info instead of "Uni student"
+                    val subtitle = findViewById<TextView>(R.id.tvUserDepartment)
+                    subtitle.text = "$yearText, $branch"
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting user info", exception)
+            }
     }
 }
