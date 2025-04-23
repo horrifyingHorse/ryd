@@ -71,17 +71,6 @@
             android:textColorHint="#979797"
             android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/etUsername"
-            android:layout_width="280dp"
-            android:layout_height="wrap_content"
-            android:hint="Username"
-            android:inputType="text"
-            android:background="@drawable/edittext_background"
-            android:textColor="#171717"
-            android:textColorHint="#979797"
-            android:layout_marginBottom="16dp"/>
-
         <!-- Password EditText -->
         <EditText
             android:id="@+id/etPassword"

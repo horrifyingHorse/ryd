@@ -1,5 +1,6 @@
 package com.example.ryd
 
+import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
@@ -28,6 +29,7 @@ class RideDetailActivity : AppCompatActivity() {
 
     private lateinit var toolbar: Toolbar
     private lateinit var tvRiderName: TextView
+    private lateinit var tvRiderSubtitle: TextView
     private lateinit var tvRideType: TextView
     private lateinit var tvFromLocation: TextView
     private lateinit var tvDestination: TextView
@@ -80,6 +82,7 @@ class RideDetailActivity : AppCompatActivity() {
         // Initialize UI components
         toolbar = findViewById(R.id.toolbar)
         tvRiderName = findViewById(R.id.tvRiderName)
+        tvRiderSubtitle = findViewById(R.id.tvRiderSubtitle)
         tvRideType = findViewById(R.id.tvRideType)
         tvFromLocation = findViewById(R.id.tvFromLocation)
         tvDestination = findViewById(R.id.tvDestination)
@@ -169,9 +172,9 @@ class RideDetailActivity : AppCompatActivity() {
                     // Only load requests if current user is the ride owner
                     if (ride?.userId == currentUserId) {
                         loadRideRequests()
-                    } else {
-                        requestsCard.visibility = View.GONE
-                        confirmedCard.visibility = View.GONE
+//                    } else {
+//                        requestsCard.visibility = View.GONE
+//                        confirmedCard.visibility = View.GONE
                     }
                 } else {
                     Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
@@ -192,9 +195,9 @@ class RideDetailActivity : AppCompatActivity() {
                     // Only load requests if current user is the ride owner
                     if (ride?.userId == currentUserId) {
                         loadRideRequests()
-                    } else {
-                        requestsCard.visibility = View.GONE
-                        confirmedCard.visibility = View.GONE
+//                    } else {
+//                        requestsCard.visibility = View.GONE
+//                        confirmedCard.visibility = View.GONE
                     }
                 } else {
                     Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
@@ -289,6 +292,8 @@ class RideDetailActivity : AppCompatActivity() {
             tvFromLocation.text = ride.fromLocation
             tvDestination.text = ride.destination
 
+            loadRideCreatorInfo()
+
             val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.getDefault())
             val departureDate = Date(ride.departureTime)
             tvDepartureTime.text = dateFormat.format(departureDate)
@@ -310,28 +315,22 @@ class RideDetailActivity : AppCompatActivity() {
 
             val currentUserId = auth.currentUser?.uid
 
-            // Show/hide UI elements based on whether the current user is the ride owner
+            // Always show request and confirmed cards, but only show accept/deny buttons to ride owner
+            requestsCard.visibility = View.VISIBLE
+            confirmedCard.visibility = View.VISIBLE
+
+            // Show Join Trip button only if not ride owner
             if (ride.userId == currentUserId) {
                 // Current user is the ride owner
                 btnRequestRide.visibility = View.GONE
-
-                // Show requests and confirmed sections
-                requestsCard.visibility = View.VISIBLE
-                confirmedCard.visibility = View.VISIBLE
-
-                // Load ride requests
-                loadRideRequests()
             } else {
                 // Current user is not the ride owner
-                requestsCard.visibility = View.GONE
-                confirmedCard.visibility = View.GONE
-
-                // Show Join Trip button
                 btnRequestRide.visibility = View.VISIBLE
-
-                // Check if user already sent a request
                 checkExistingRequest()
             }
+
+            // Always load ride requests regardless of who's viewing
+            loadRideRequests()
         }
     }
     private fun loadRideRequests() {
@@ -714,5 +713,35 @@ class RideDetailActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    private fun loadRideCreatorInfo() {
+        ride?.userId?.let { userId ->
+            FirebaseFirestore.getInstance().collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        // Extract academic year and branch
+                        val academicYear = document.getLong("academicYear")?.toInt() ?: 0
+                        val branch = document.getString("branch") ?: "Unknown"
+
+                        // Format the year text
+                        val yearText = when (academicYear) {
+                            1 -> "1st year"
+                            2 -> "2nd year"
+                            3 -> "3rd year"
+                            4 -> "4th year"
+                            else -> "$academicYear year"
+                        }
+
+                        // Update the subtitle text
+                        tvRiderSubtitle.text = "$yearText, $branch"
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.w(TAG, "Error getting user info", exception)
+                }
+        }
     }
 }
