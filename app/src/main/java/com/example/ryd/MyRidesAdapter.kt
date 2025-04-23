@@ -1,5 +1,6 @@
 package com.example.ryd
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
@@ -48,33 +49,52 @@ class MyRidesAdapter(
             if (ride.isDriver) R.drawable.bg_ride_status else R.drawable.bg_badge
         )
 
-        // Set ride status based on status field
-        when (ride.status) {
-            "requested" -> {
-                holder.tvStatus.text = "Requested"
-                holder.tvStatus.setBackgroundColor(
-                    ContextCompat.getColor(context, R.color.colorRequested)
-                )
-                // Hide edit button for requested rides
-                holder.btnEdit.visibility = View.GONE
-                holder.btnCancel.text = "Cancel Request"
+        if (ride.status == "accepted") {
+            // For accepted rides, show Cancel Trip instead of Request Accepted
+            holder.btnCancel.text = "Cancel Request"
+            holder.btnEdit.visibility = View.GONE
+
+            holder.btnCancel.setOnClickListener {
+                // Show confirmation dialog
+                AlertDialog.Builder(context)
+                    .setTitle("Cancel Trip")
+                    .setMessage("Are you sure you want to cancel this trip? This cannot be undone.")
+                    .setPositiveButton("Cancel Trip") { _, _ ->
+                        cancelRideRequest(context, ride)
+                    }
+                    .setNegativeButton("Keep Trip", null)
+                    .show()
             }
-            "posted" -> {
-                holder.tvStatus.text = "Upcoming"
-                holder.tvStatus.setBackgroundColor(
-                    ContextCompat.getColor(context, R.color.colorAccent)
-                )
-                holder.btnEdit.visibility = View.VISIBLE
-                holder.btnCancel.text = "Cancel"
-            }
-            else -> {
-                holder.tvStatus.text = "Upcoming"
-                holder.tvStatus.setBackgroundColor(
-                    ContextCompat.getColor(context, R.color.colorAccent)
-                )
+        } else {
+            // Set ride status based on status field
+            when (ride.status) {
+                "requested" -> {
+                    holder.tvStatus.text = "Requested"
+                    holder.tvStatus.setBackgroundColor(
+                        ContextCompat.getColor(context, R.color.colorRequested)
+                    )
+                    // Hide edit button for requested rides
+                    holder.btnEdit.visibility = View.GONE
+                    holder.btnCancel.text = "Cancel Request"
+                }
+
+                "posted" -> {
+                    holder.tvStatus.text = "Upcoming"
+                    holder.tvStatus.setBackgroundColor(
+                        ContextCompat.getColor(context, R.color.colorAccent)
+                    )
+                    holder.btnEdit.visibility = View.VISIBLE
+                    holder.btnCancel.text = "Cancel"
+                }
+
+                else -> {
+                    holder.tvStatus.text = "Upcoming"
+                    holder.tvStatus.setBackgroundColor(
+                        ContextCompat.getColor(context, R.color.colorAccent)
+                    )
+                }
             }
         }
-
         // Set other ride details
         holder.tvFromLocation.text = ride.fromLocation
         holder.tvDestination.text = ride.destination
@@ -100,7 +120,7 @@ class MyRidesAdapter(
         }
         holder.btnCancel.setOnClickListener {
             // Handle cancel differently based on status
-            if (ride.status == "requested") {
+            if (ride.status == "requested" || ride.status == "accepted") {
                 // Cancel request
                 cancelRideRequest(context, ride)
             } else {
@@ -108,6 +128,130 @@ class MyRidesAdapter(
                 cancelRide(context, ride)
             }
         }
+    }
+
+    private fun cancelRide(ride: Ride, holder: ViewHolder) {
+        // Show loading
+        holder.btnCancel.isEnabled = false
+
+        val context = holder.itemView.context
+        val firestore = FirebaseFirestore.getInstance()
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Update the ride request status to "cancelled"
+        firestore.collection("rideRequests")
+            .whereEqualTo("rideId", ride.id)
+            .whereEqualTo("riderId", userId)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    showError(holder, "Request not found")
+                    return@addOnSuccessListener
+                }
+
+                val batch = firestore.batch()
+
+                // Update request status
+                for (document in documents) {
+                    batch.update(document.reference, "status", "cancelled")
+                }
+
+                // Update user ride copy
+                firestore.collection("userRides")
+                    .document(userId)
+                    .collection("rides")
+                    .document(ride.id)
+                    .update("status", "cancelled")
+                    .addOnSuccessListener {
+                        // Update original ride to free up a seat if this was a passenger
+//                        if (!ride.isDriver) {
+//                            firestore.collection("rides")
+//                                .document(ride.originalRideId ?: ride.id)
+//                                .get()
+//                                .addOnSuccessListener { rideDoc ->
+//                                    val currentSeats = rideDoc.getLong("availableSeats") ?: 0
+//                                    rideDoc.reference.update(
+//                                        "availableSeats", currentSeats + 1
+//                                    )
+//                                }
+//                        }
+
+                        // Commit all changes
+                        batch.commit()
+                            .addOnSuccessListener {
+                                // Success, update UI
+                                holder.btnCancel.text = "Cancelled"
+                                holder.btnCancel.isEnabled = false
+
+                                // Use a system color since colorGrey is not defined
+                                holder.btnCancel.setBackgroundColor(
+                                    ContextCompat.getColor(context, android.R.color.darker_gray)
+                                )
+
+                                // Notify ride creator about cancellation
+                                if (!ride.isDriver) {
+                                    sendCancellationNotification(ride)
+                                }
+
+                                Toast.makeText(context, "Trip cancelled successfully",
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                showError(holder, "Failed to cancel: ${e.message}")
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        showError(holder, "Failed to cancel: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                showError(holder, "Failed to cancel: ${e.message}")
+            }
+    }
+
+    private fun showError(holder: ViewHolder, message: String) {
+//        holder.progressBar.visibility = View.GONE
+        val context = holder.itemView.context
+        holder.btnCancel.isEnabled = true
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    // Optional: Send notification to the other party
+    private fun sendCancellationNotification(ride: Ride) {
+        val firestore = FirebaseFirestore.getInstance()
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val currentUserName = FirebaseAuth.getInstance().currentUser?.displayName ?: "A user"
+
+        // Determine the recipient (if current user is driver, notify passenger, and vice versa)
+        val recipientId = ride.userId
+//            if (ride.isDriver) {
+//            ride.userId // Notify passenger
+//        } else {
+//            ride.driverId // Notify driver
+//        }
+
+        // Skip if no recipient
+        if (recipientId.isNullOrEmpty()) return
+
+        // Create notification document
+        val notification = hashMapOf(
+            "userId" to recipientId,
+            "title" to "Trip Cancelled",
+            "message" to "$currentUserName has cancelled the trip from ${ride.fromLocation} to ${ride.destination}",
+            "timestamp" to System.currentTimeMillis(),
+            "read" to false,
+            "rideId" to ride.id
+        )
+
+        // Save notification
+        firestore.collection("notifications")
+            .add(notification)
+            .addOnSuccessListener {
+                // Notification created successfully
+            }
+            .addOnFailureListener {
+                // Failed to create notification, but we don't need to bother the user about this
+            }
     }
 
     private fun cancelRideRequest(context: Context, ride: Ride) {

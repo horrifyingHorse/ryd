@@ -166,32 +166,6 @@ class RideDetailActivity : AppCompatActivity() {
                 }
             }
 
-//        firestore.collection("rides")
-//            .document(rideId)
-//            .get()
-//            .addOnSuccessListener { document ->
-//                if (document.exists()) {
-//                    ride = document.toObject(Ride::class.java)?.apply { id = document.id }
-//                    updateUI()
-//
-//                    loadRideRequests()
-//
-//                    // Only load requests if current user is the ride owner
-//                    if (ride?.userId == currentUserId) {
-//                        loadRideRequests()
-////                    } else {
-////                        requestsCard.visibility = View.GONE
-////                        confirmedCard.visibility = View.GONE
-//                    }
-//                } else {
-//                    Toast.makeText(this, "Ride not found", Toast.LENGTH_SHORT).show()
-//                    finish()
-//                }
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Error loading ride: ${e.message}", Toast.LENGTH_SHORT).show()
-//                finish()
-//            }
     }
 
     private fun checkExistingRequest() {
@@ -213,8 +187,8 @@ class RideDetailActivity : AppCompatActivity() {
                             btnRequestRide.isEnabled = true
                         }
                         "accepted" -> {
-                            btnRequestRide.text = "Request Accepted"
-                            btnRequestRide.isEnabled = false
+                            btnRequestRide.text = "Cancel Request"
+                            btnRequestRide.isEnabled = true
                         }
                         "rejected" -> {
                             btnRequestRide.text = "Request Rejected"

@@ -149,12 +149,12 @@
                 app:tint="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/tvSeatsAvailable"
+                android:id="@+id/tvTraveller"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:text="3 seats available"
+                android:text="Passenger"
                 android:textAppearance="?attr/textAppearanceBody2" />
 
             <com.google.android.material.button.MaterialButton
@@ -162,7 +162,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Request"
+                android:text="Join"
                 android:textSize="12sp"
                 app:cornerRadius="20dp" />
         </LinearLayout>

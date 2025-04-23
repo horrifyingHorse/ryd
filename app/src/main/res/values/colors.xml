@@ -6,4 +6,6 @@
     <color name="colorPrimaryDark">#388E3C</color>
     <color name="colorAccent">#8BC34A</color>
     <color name="colorRequested">#FF9800</color>
+    <color name="colorDanger">#F44336</color>
+    <color name="colorGrey">#757575</color>
 </resources>

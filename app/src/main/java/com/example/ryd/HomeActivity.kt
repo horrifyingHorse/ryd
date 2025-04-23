@@ -89,8 +89,6 @@ class HomeActivity : AppCompatActivity() {
         val btnPostRide = findViewById<MaterialButton>(R.id.btnPostRide)
         val btnFindMatches = findViewById<MaterialButton>(R.id.btnFindMatches)
 
-
-
         descriptionInputLayout.visibility = View.GONE
 
         auth = FirebaseAuth.getInstance()

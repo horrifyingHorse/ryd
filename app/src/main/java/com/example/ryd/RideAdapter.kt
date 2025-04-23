@@ -36,9 +36,9 @@ class RideAdapter(
         private val tvFrom: TextView = itemView.findViewById(R.id.tvFromLocation)
         private val tvDestination: TextView = itemView.findViewById(R.id.tvDestination)
         private val tvDepartureTime: TextView = itemView.findViewById(R.id.tvDepartureTime)
-        private val tvSeatsAvailable: TextView = itemView.findViewById(R.id.tvSeatsAvailable)
         private val ivRiderImage: ImageView = itemView.findViewById(R.id.ivRiderImage)
         private val btnRequestRide: Button = itemView.findViewById(R.id.btnRequestRide)
+        private val tvTraveller: TextView = itemView.findViewById(R.id.tvTraveller)
 
         fun bind(ride: Ride) {
             tvRiderName.text = ride.userName
@@ -54,6 +54,7 @@ class RideAdapter(
 
             // Set ride type
             tvRideType.text = if (ride.isDriver) "Driver" else "Passenger"
+            tvTraveller.text = if (ride.isDriver) "Driver" else "Passenger"
 
             // Set destination
             tvFrom.text = ride.fromLocation
@@ -65,12 +66,12 @@ class RideAdapter(
             tvDepartureTime.text = dateFormat.format(departureDate)
 
             // Set seats info
-            if (ride.isDriver) {
-                tvSeatsAvailable.text = "${ride.seats} seats available"
-                tvSeatsAvailable.visibility = View.VISIBLE
-            } else {
-                tvSeatsAvailable.visibility = View.GONE
-            }
+//            if (ride.isDriver) {
+//                tvSeatsAvailable.text = "${ride.seats} seats available"
+//                tvSeatsAvailable.visibility = View.VISIBLE
+//            } else {
+//                tvSeatsAvailable.visibility = View.GONE
+//            }
 
             // Load user photo if available
             if (ride.userPhoto.isNotEmpty()) {
