@@ -1,6 +1,8 @@
 package com.example.ryd
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -95,6 +97,7 @@ class MessagesActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener { e ->
+                Log.e("MessagesActivity", "Error loading conversations", e)
                 showNoMessages("Error loading messages: ${e.message}")
             }
     }
@@ -106,10 +109,16 @@ class MessagesActivity : AppCompatActivity() {
     }
 
     private fun onConversationSelected(conversation: Conversation) {
+        // Get the other user id from the participants list
+        val currentUserId = auth.currentUser?.uid ?: return
+        val otherUserId = conversation.participants.find { it != currentUserId } ?: return
+
         // Navigate to chat screen
-        // val intent = Intent(this, ChatActivity::class.java)
-        // intent.putExtra("CONVERSATION_ID", conversation.id)
-        // startActivity(intent)
+        val intent = Intent(this, ChatActivity::class.java)
+        intent.putExtra("CONVERSATION_ID", conversation.id)
+        intent.putExtra("OTHER_USER_ID", otherUserId)
+        intent.putExtra("OTHER_USER_NAME", conversation.otherUserName)
+        startActivity(intent)
     }
 
     override fun onSupportNavigateUp(): Boolean {

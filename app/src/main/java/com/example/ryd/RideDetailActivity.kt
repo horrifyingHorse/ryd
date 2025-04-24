@@ -1,6 +1,7 @@
 package com.example.ryd
 
 import android.content.ContentValues.TAG
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
@@ -518,9 +519,11 @@ class RideDetailActivity : AppCompatActivity() {
 
                 if (existingConversationId != null) {
                     // Open existing conversation
-                    // val intent = Intent(this, ChatActivity::class.java)
-                    // intent.putExtra("CONVERSATION_ID", existingConversationId)
-                    // startActivity(intent)
+                     val intent = Intent(this, ChatActivity::class.java)
+                     intent.putExtra("CONVERSATION_ID", existingConversationId)
+//                     intent.putExtra("OTHER_USER_ID", otherUserId)
+//                     intent.putExtra("OTHER_USER_NAME", otherUserName)
+                     startActivity(intent)
                     Toast.makeText(this, "This would open the chat screen", Toast.LENGTH_SHORT).show()
                 } else {
                     // Create new conversation
@@ -550,9 +553,9 @@ class RideDetailActivity : AppCompatActivity() {
                                 .add(message)
                                 .addOnSuccessListener {
                                     // Open new conversation
-                                    // val intent = Intent(this, ChatActivity::class.java)
-                                    // intent.putExtra("CONVERSATION_ID", documentRef.id)
-                                    // startActivity(intent)
+                                    val intent = Intent(this, ChatActivity::class.java)
+                                    intent.putExtra("CONVERSATION_ID", documentRef.id)
+                                    startActivity(intent)
                                     Toast.makeText(this, "This would open the new chat screen", Toast.LENGTH_SHORT).show()
                                 }
                         }
