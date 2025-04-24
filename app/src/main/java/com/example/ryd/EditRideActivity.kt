@@ -206,11 +206,9 @@ class EditRideActivity : AppCompatActivity() {
             return
         }
 
-        // Show progress
         binding.progressBar.visibility = View.VISIBLE
         binding.btnSaveChanges.isEnabled = false
 
-        // Update ride in Firestore
         val rideUpdates = hashMapOf<String, Any>(
             "fromLocation" to fromLocation,
             "destination" to destination,

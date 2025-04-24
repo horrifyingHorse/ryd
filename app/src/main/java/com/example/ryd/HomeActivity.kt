@@ -47,12 +47,10 @@ class HomeActivity : AppCompatActivity() {
         private const val DESTINATION_LOCATION_REQUEST_CODE = 101
     }
 
-    // Firebase
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var authStateListener: FirebaseAuth.AuthStateListener
 
-    // UI Components
     private lateinit var toolbar: Toolbar
     private lateinit var bottomNavView: BottomNavigationView
     private lateinit var fabAddRide: FloatingActionButton
@@ -69,7 +67,6 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var rvAvailableRides: RecyclerView
     private lateinit var noRidesLayout: LinearLayout
 
-    // Data
     private lateinit var rideAdapter: RideAdapter
     private val ridesList = mutableListOf<Ride>()
     private var selectedDate: Long = 0
@@ -95,7 +92,6 @@ class HomeActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-        // Initialize UI components
         initializeUI()
 
         // Set up AuthStateListener
@@ -105,10 +101,8 @@ class HomeActivity : AppCompatActivity() {
         setupClickListeners()
         setupLocationPickers()
 
-        // Load user data
         loadUserInfo()
 
-        // Load available rides
         loadAvailableRides()
 
         btnPostRide.setOnClickListener {
@@ -365,19 +359,6 @@ class HomeActivity : AppCompatActivity() {
         val isDriver = chipDriver.isChecked
         val description = findViewById<TextInputEditText>(R.id.etDescription).text.toString().trim()
 
-        if (isDriver) {
-//            val seatsText = etSeats.text.toString()
-//            if (seatsText.isEmpty()) {
-//                etSeats.error = "Please enter available seats"
-//                return
-//            }
-//            seats = seatsText.toIntOrNull() ?: 0
-//            if (seats <= 0) {
-//                etSeats.error = "Must have at least 1 seat"
-//                return
-//            }
-        }
-
         // Create ride object
         val ride = Ride(
             id = "",
@@ -528,7 +509,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupLocationPickers() {
-        // Set up click listener for "From" field to open the map
         etFrom.setOnClickListener {
             // Launch map activity for location selection
             val intent = Intent(this, MapPickerActivity::class.java)
@@ -587,7 +567,7 @@ class HomeActivity : AppCompatActivity() {
             }
         }
     }
-    // Add this method to HomeActivity.kt
+
     private fun findMatches() {
         // Get current input values
         val fromLocation = etFrom.text.toString().trim()
@@ -621,7 +601,6 @@ class HomeActivity : AppCompatActivity() {
             .setCancelable(false)
             .show()
 
-        // Step 1: Get coordinates for the from location and destination
         getCoordinatesForLocation(fromLocation) { fromCoordinates ->
             if (fromCoordinates == null) {
                 loadingDialog.dismiss()

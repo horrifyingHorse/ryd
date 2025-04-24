@@ -11,6 +11,7 @@ import android.graphics.LinearGradient
 import android.graphics.Shader
 import android.graphics.Color
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
@@ -62,46 +63,56 @@ class SignInActivity : AppCompatActivity() {
         tvSignUp.setOnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
-            finish() // ends activity
+            finish()
         }
     }
 
     private fun login() {
         val email = etEmail.text.toString()
         val pass = etPassword.text.toString()
-        // calling signInWithEmailAndPassword(email, pass)
-        // function using Firebase auth object
-        // On successful response Display a Toast
+        val cbHuman = findViewById<CheckBox>(R.id.cbHuman)
+
+        if (!cbHuman.isChecked) {
+            Toast.makeText(this, "Please verify that you are not a robot", Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        // Input validation
+        if (email.isEmpty() || pass.isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener(this) { task ->
-                // Hide progress
                 // progressBar.visibility = View.GONE
 
                 if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    val user = auth.currentUser
-                    Toast.makeText(this, "Sign in successful",
-                        Toast.LENGTH_SHORT).show()
-
-                    // Navigate to home activity
+                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, HomeActivity::class.java))
-                    finish() // Close this activity so user can't go back
+                    finish()
                 } else {
-                    // If sign in fails, display a message to the user
-                    Toast.makeText(this, "Authentication failed: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT).show()
+                    when (task.exception) {
+                        is com.google.firebase.auth.FirebaseAuthInvalidUserException -> {
+                            etEmail.error = "Email not registered"
+                            etEmail.requestFocus()
+                        }
+
+                        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> {
+                            etPassword.error = "Incorrect password"
+                            etPassword.requestFocus()
+                        }
+
+                        else -> {
+                            Toast.makeText(
+                                this,
+                                "Authentication failed: ${task.exception?.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
             }
-
-//        auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener(this) {
-//            if (it.isSuccessful) {
-//                Toast.makeText(this, "Successfully LoggedIn", Toast.LENGTH_SHORT).show()
-//                val intent = Intent(this, HomeActivity::class.java)
-//                startActivity(intent)
-//                finish()
-//            } else {
-//                Toast.makeText(this, "Log In failed ", Toast.LENGTH_SHORT).show()
-//            }
-//        }
     }
 }

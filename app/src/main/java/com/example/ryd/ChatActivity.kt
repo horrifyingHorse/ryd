@@ -120,7 +120,6 @@ class ChatActivity : AppCompatActivity() {
                 messagesAdapter.notifyDataSetChanged()
                 rvMessages.scrollToPosition(messagesList.size - 1)
 
-                // Mark messages as read
                 markMessagesAsRead()
             }
             .addOnFailureListener { e ->
@@ -129,7 +128,6 @@ class ChatActivity : AppCompatActivity() {
                 tvNoMessages.visibility = View.VISIBLE
             }
 
-        // Set up real-time updates for new messages
         firestore.collection("conversations")
             .document(conversationId)
             .collection("messages")
@@ -169,10 +167,8 @@ class ChatActivity : AppCompatActivity() {
 
         val currentUser = auth.currentUser ?: return
 
-        // Clear input field
         etMessage.setText("")
 
-        // Create message object
         val message = Message(
             senderId = currentUser.uid,
             text = messageText,
@@ -181,10 +177,8 @@ class ChatActivity : AppCompatActivity() {
         )
 
         if (conversationId.isEmpty()) {
-            // Create a new conversation
             createNewConversation(message)
         } else {
-            // Add message to existing conversation
             addMessageToConversation(message)
         }
     }
@@ -237,12 +231,10 @@ class ChatActivity : AppCompatActivity() {
     private fun markMessagesAsRead() {
         val currentUser = auth.currentUser ?: return
 
-        // Get all unread messages not sent by current user
         val unreadMessages = messagesList.filter {
             !it.read && it.senderId != currentUser.uid
         }
 
-        // Batch update to mark messages as read
         if (unreadMessages.isNotEmpty()) {
             val batch = firestore.batch()
 

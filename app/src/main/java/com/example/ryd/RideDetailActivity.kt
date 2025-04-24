@@ -250,7 +250,6 @@ class RideDetailActivity : AppCompatActivity() {
                 tvDescription.visibility = View.GONE
             }
 
-            // Show seats available only for drivers
             if (ride.isDriver) {
                 tvSeatsAvailable.visibility = View.VISIBLE
                 tvSeatsAvailable.text = "${ride.seats} seats available"
@@ -260,23 +259,19 @@ class RideDetailActivity : AppCompatActivity() {
 
             val currentUserId = auth.currentUser?.uid
 
-            // Always show request and confirmed cards, but only show accept/deny buttons to ride owner
             requestsCard.visibility = View.VISIBLE
             confirmedCard.visibility = View.VISIBLE
 
             // Show Join Trip button only if not ride owner
             if (ride.userId == currentUserId) {
-                // Current user is the ride owner
                 btnRequestRide.visibility = View.GONE
                 btnMessageRider.visibility = View.GONE
             } else {
-                // Current user is not the ride owner
                 btnRequestRide.visibility = View.VISIBLE
                 btnMessageRider.visibility = View.VISIBLE
                 checkExistingRequest()
             }
 
-            // Always load ride requests regardless of who's viewing
             loadRideRequests()
         }
     }

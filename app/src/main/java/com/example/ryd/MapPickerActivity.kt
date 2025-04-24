@@ -44,7 +44,6 @@ class MapPickerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize OSMDroid configuration
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
         Configuration.getInstance().userAgentValue = applicationContext.packageName
 
@@ -53,7 +52,6 @@ class MapPickerActivity : AppCompatActivity() {
         requestType = intent.getStringExtra("REQUEST_TYPE")
         val viewOnlyMode = intent.getBooleanExtra("VIEW_ONLY_MODE", false)
         val locationName = intent.getStringExtra("LOCATION_NAME")
-
 
         // Set up the toolbar
         toolbar = findViewById(R.id.toolbar)
@@ -66,10 +64,7 @@ class MapPickerActivity : AppCompatActivity() {
             else -> supportActionBar?.title = "Select Starting Point"
         }
 
-        // Initialize map view
         mapView = findViewById(R.id.map)
-
-        // Set up search view
         searchView = findViewById(R.id.searchView)
 
         // Set up the confirm button
@@ -88,17 +83,11 @@ class MapPickerActivity : AppCompatActivity() {
         }
 
         if (viewOnlyMode && locationName != null) {
-            // Change UI for view-only mode
             supportActionBar?.title = "Location Details"
-
-            // Hide any selection buttons or controls
             confirmButton?.visibility = View.GONE
-
-            // Search for the location
             searchLocation(locationName)
         }
 
-        // Request permissions before setting up the map
         checkAndRequestPermissions()
     }
 
@@ -167,7 +156,6 @@ class MapPickerActivity : AppCompatActivity() {
         mapView.overlays.add(MapEventsOverlay(mapEventsReceiver))
     }
 
-    // Add this method to geocode the initial location
     private fun searchInitialLocation(locationName: String) {
         val geocoder = android.location.Geocoder(this, Locale.getDefault())
         try {
