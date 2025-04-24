@@ -3,6 +3,7 @@ package com.example.ryd
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -98,6 +99,13 @@ class MyRidesAdapter(
         // Set other ride details
         holder.tvFromLocation.text = ride.fromLocation
         holder.tvDestination.text = ride.destination
+        holder.tvFromLocation.setOnClickListener {
+            openLocationInMap(ride.fromLocation, context)
+        }
+
+        holder.tvDestination.setOnClickListener {
+            openLocationInMap(ride.destination, context)
+        }
 
         val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.getDefault())
         val departureDate = Date(ride.departureTime)
@@ -127,6 +135,22 @@ class MyRidesAdapter(
                 // Cancel ride
                 cancelRide(context, ride)
             }
+        }
+    }
+
+    private fun openLocationInMap(location: String, context: Context) {
+        try {
+            // Create an intent to your MapPickerActivity
+            val mapIntent = Intent(context, MapPickerActivity::class.java).apply {
+                // Pass location as an extra
+                putExtra("CURRENT_LOCATION", location)
+                // Add a flag to indicate this is for viewing only
+                putExtra("VIEW_ONLY_MODE", true)
+            }
+            context.startActivity(mapIntent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Could not open map", Toast.LENGTH_SHORT).show()
+            Log.e("MyRidesAdapter", "Error opening map: ${e.message}")
         }
     }
 

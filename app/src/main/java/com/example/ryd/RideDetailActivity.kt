@@ -121,6 +121,28 @@ class RideDetailActivity : AppCompatActivity() {
         btnMessageRider.setOnClickListener {
             messageRider()
         }
+
+        tvFromLocation.setOnClickListener {
+            openLocationInMap(tvFromLocation.text.toString())
+        }
+
+        tvDestination.setOnClickListener {
+            openLocationInMap(tvDestination.text.toString())
+        }
+    }
+
+    private fun openLocationInMap(location: String) {
+        try {
+            // Create an intent to your MyMapPickerActivity
+            val mapIntent = Intent(this, MapPickerActivity::class.java).apply {
+                putExtra("CURRENT_LOCATION", location)
+                putExtra("VIEW_ONLY_MODE", true)
+            }
+            startActivity(mapIntent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not open map", Toast.LENGTH_SHORT).show()
+            Log.e("RideDetailActivity", "Error opening map: ${e.message}")
+        }
     }
 
     private fun setupRecyclerViews() {

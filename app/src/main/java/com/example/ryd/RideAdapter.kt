@@ -1,11 +1,16 @@
 package com.example.ryd
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import java.text.SimpleDateFormat
@@ -60,6 +65,15 @@ class RideAdapter(
             tvFrom.text = ride.fromLocation
             tvDestination.text = ride.destination
 
+            tvFrom.setOnClickListener {
+                openLocationInMap(ride.fromLocation, itemView.context)
+            }
+
+            // Make destination clickable to open in maps
+            tvDestination.setOnClickListener {
+                openLocationInMap(ride.destination, itemView.context)
+            }
+
             // Format departure time
             val dateFormat = SimpleDateFormat("E, MMM d, h:mm a", Locale.getDefault())
             val departureDate = Date(ride.departureTime)
@@ -92,6 +106,22 @@ class RideAdapter(
             // Make the entire item clickable
             itemView.setOnClickListener {
                 onRideClick(ride)
+            }
+        }
+
+        private fun openLocationInMap(location: String, context: Context) {
+            try {
+                // Create an intent to your custom map activity
+                val mapIntent = Intent(context, MapPickerActivity::class.java).apply {
+                    // Pass location as an extra
+                    putExtra("LOCATION_NAME", location)
+                    // Add a flag to indicate this is for viewing only
+                    putExtra("VIEW_ONLY_MODE", true)
+                }
+                context.startActivity(mapIntent)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Could not open map", Toast.LENGTH_SHORT).show()
+                Log.e("RideAdapter", "Error opening map: ${e.message}")
             }
         }
     }

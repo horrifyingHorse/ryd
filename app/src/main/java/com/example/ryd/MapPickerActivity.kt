@@ -21,11 +21,13 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import android.view.View
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.util.*
+
 
 class MapPickerActivity : AppCompatActivity() {
 
@@ -49,6 +51,9 @@ class MapPickerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_map_picker)
 
         requestType = intent.getStringExtra("REQUEST_TYPE")
+        val viewOnlyMode = intent.getBooleanExtra("VIEW_ONLY_MODE", false)
+        val locationName = intent.getStringExtra("LOCATION_NAME")
+
 
         // Set up the toolbar
         toolbar = findViewById(R.id.toolbar)
@@ -80,6 +85,17 @@ class MapPickerActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Please select a location", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        if (viewOnlyMode && locationName != null) {
+            // Change UI for view-only mode
+            supportActionBar?.title = "Location Details"
+
+            // Hide any selection buttons or controls
+            confirmButton?.visibility = View.GONE
+
+            // Search for the location
+            searchLocation(locationName)
         }
 
         // Request permissions before setting up the map

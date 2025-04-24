@@ -65,6 +65,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var chipDriver: Chip
     private lateinit var chipPassenger: Chip
     private lateinit var btnCreateRide: Button
+    private lateinit var btnEditProfile: Button
     private lateinit var rvAvailableRides: RecyclerView
     private lateinit var noRidesLayout: LinearLayout
 
@@ -163,6 +164,7 @@ class HomeActivity : AppCompatActivity() {
         chipDriver = findViewById(R.id.chipDriver)
         chipPassenger = findViewById(R.id.chipPassenger)
         btnCreateRide = findViewById(R.id.btnFindMatches)
+        btnEditProfile = findViewById(R.id.btnEditProfile)
         rvAvailableRides = findViewById(R.id.rvAvailableRides)
         noRidesLayout = findViewById(R.id.noRidesLayout)
 
@@ -214,6 +216,10 @@ class HomeActivity : AppCompatActivity() {
         // Create ride button click listener
         btnCreateRide.setOnClickListener {
             createRide()
+        }
+
+        btnEditProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
 
         // Chip group logic for driver/passenger selection

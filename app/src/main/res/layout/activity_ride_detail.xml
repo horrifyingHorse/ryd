@@ -103,6 +103,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                        android:clickable="true"
+                        android:focusable="true"
                         tools:text="Downtown" />
 
                     <!-- Keep the existing destination section but change label to "To:" for consistency -->
@@ -127,6 +129,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                        android:clickable="true"
+                        android:focusable="true"
                         tools:text="University Campus" />
 
                     <TextView

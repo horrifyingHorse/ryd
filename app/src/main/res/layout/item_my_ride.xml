@@ -20,7 +20,7 @@
             android:id="@+id/tvRideType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_ride_type"
+            android:background="@drawable/bg_ride_status"
             android:paddingStart="12dp"
             android:paddingTop="4dp"
             android:paddingEnd="12dp"

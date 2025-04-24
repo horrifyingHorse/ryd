@@ -54,7 +54,7 @@
                 android:id="@+id/tvRideType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_ride_type"
+                android:background="@drawable/bg_ride_status"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:text="Driver"
@@ -87,6 +87,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="University Campus"
+                android:clickable="true"
+                android:focusable="true"
                 android:textAppearance="?attr/textAppearanceBody2" />
         </LinearLayout>
 
@@ -110,6 +112,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="Downtown Mall"
+                android:clickable="true"
+                android:focusable="true"
                 android:textAppearance="?attr/textAppearanceBody2" />
         </LinearLayout>
 
